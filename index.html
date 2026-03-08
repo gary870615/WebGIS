@@ -100,8 +100,8 @@
 
   // 匯入兩個檔案
   const DATA_SOURCES = [
-    { label: "GNSS固定站", url: "./2016_Meinong_u_CGNSS.geojson" },
-    { label: "GNSS移動站", url: "./2016_Meinong_u_SGNSS.geojson" }
+    { label: "GNSS固定站", url: "./data/2016_Meinong_u_CGNSS.geojson" },
+    { label: "GNSS移動站", url: "./data/2016_Meinong_u_SGNSS.geojson" }
   ];
 
   // 1) 初始化地圖
@@ -177,13 +177,13 @@ function popupHTML(props, fallbackTitle) {
   
   function makeGeoLayer(label, geojson) {
     return L.geoJSON(geojson, {
-      // ✅ Point 用自訂 marker（不同 layer 用不同 icon）
+      // Point 用自訂 marker（不同 layer 用不同 icon）
       pointToLayer: (feature, latlng) => {
         const icon = ICONS[label] || ICONS["GNSS固定站"]; // 找不到就用 A 當預設
         return L.marker(latlng, { icon });
       },
 
-      // ✅ Popup 仍保留你原本的內容
+      // 每個點綁 popup
       onEachFeature: (feature, layer) => {
         const p = feature.properties || {};
         layer.bindPopup(popupHTML(p, label)); // 你原本就有 popupHTML()
@@ -202,13 +202,14 @@ function popupHTML(props, fallbackTitle) {
     return bounds;
   }
 
+  
   function addLayersToMap(layersObj, fit = true) {
     // 加到地圖
     for (const label in layersObj) {
       layersObj[label].addTo(map);
     }
 
-    // 右上角圖層開關（可選）
+    // 右上角圖層開關
     layerControl = L.control.layers(null, layersObj, { collapsed: false }).addTo(map);
 
     // fit 到所有圖層的總範圍
@@ -233,21 +234,22 @@ function popupHTML(props, fallbackTitle) {
     return geojson;
   }
 
-  // 依 bbox 在前端本地篩選（不靠 API）
+  // 依 bbox 在前端本地篩選
   function filterByMapBounds(geojson) {
-    const b = map.getBounds();
+    const b = map.getBounds();  // 取得地圖目前視窗範圍
     return {
       type: "FeatureCollection",
-      features: (geojson.features || []).filter(f => {
+      // 把 GeoJSON 的 features 過濾掉「不在框內」的點
+      features: (geojson.features || []).filter(f => {  
         if (!f || !f.geometry) return false;
 
         // Point：用座標判斷是否在視窗內
         if (f.geometry.type === "Point") {
           const c = f.geometry.coordinates;
-          if (!Array.isArray(c) || c.length < 2) return false;
+          if (!Array.isArray(c) || c.length < 2) return false; //防呆
           const lon = Number(c[0]);
           const lat = Number(c[1]);
-          if (!Number.isFinite(lon) || !Number.isFinite(lat)) return false;
+          if (!Number.isFinite(lon) || !Number.isFinite(lat)) return false; //防呆
           return b.contains([lat, lon]); // Leaflet 用 [lat, lon]
         }
 
@@ -258,13 +260,14 @@ function popupHTML(props, fallbackTitle) {
   }
 
   async function loadAll() {
+    // 更新狀態、清掉舊圖層
     setStatus("載入兩個 GeoJSON...");
     clearAllLayers();
 
     // 讀兩個檔案
     const results = await Promise.all(DATA_SOURCES.map(d => fetchGeoJSON(d.url)));
 
-    // 存起來（bbox 篩選用）
+    // 把原始 GeoJSON存起來（bbox 篩選用）
     allGeoJSONs = {};
     DATA_SOURCES.forEach((d, i) => {
       allGeoJSONs[d.label] = results[i];
@@ -277,9 +280,10 @@ function popupHTML(props, fallbackTitle) {
     });
     overlayLayers = layersObj;
 
-    // 加到地圖 + fit 到總範圍
+    // 把圖層加到地圖 + fit 到總範圍
     addLayersToMap(overlayLayers, true);
 
+    // 統計總點數幾個檔，更新狀態列
     const total = Object.values(allGeoJSONs).reduce((s, g) => s + (g.features?.length || 0), 0);
     setStatus(`載入完成共 ${total} 筆資料（${DATA_SOURCES.length} 檔案）`);
   }
