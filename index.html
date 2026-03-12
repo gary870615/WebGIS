@@ -60,6 +60,17 @@
       border: 2px solid #ffffff;
       box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     }
+    .mkrEpicenter {
+      font-size: 40px;
+      color: #e6f60c;
+      text-shadow: 0 0 2px #fff;
+      -webkit-text-stroke: 1.5px #fff;
+    }
+    .legendEpicenter {
+      display: inline-block;
+      font-size: 28px;
+      color: #ddec0b;
+    }
   </style>
 </head>
 
@@ -91,6 +102,10 @@
   <span style="display:inline-flex;align-items:center;gap:6px;">
     <span class="mkrB"></span> GNSS移動站
   </span>
+    &nbsp;&nbsp;
+  <span style="display:inline-flex;align-items:center;gap:6px;">
+    <span class="legendEpicenter">★</span> 地震震央
+  </span>
   </div>
 </div>
 
@@ -104,13 +119,22 @@
     { label: "GNSS移動站", url: "./2016_Meinong_u_SGNSS.geojson" }
   ];
 
-  // 1) 初始化地圖
+  // 地震震央座標 
+  const EPICENTER = {
+    label: "地震震央",
+    lat: 22.92,
+    lon: 120.54
+  };
+  
+  // 初始化地圖
   const map = L.map('map').setView([23.8, 121.0], 7);
+  map.createPane('epicenterPane');  //為EPICENTER指定一個專屬 pane
+  map.getPane('epicenterPane').style.zIndex = 650; 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
 
-  // 2) 圖層與資料快取
+  // 圖層與資料快取
   let layerControl = null;    // 右上角圖層開關
   let overlayLayers = {};     // {label: L.GeoJSON}
   let allGeoJSONs = {};       // {label: FeatureCollection}
@@ -156,11 +180,10 @@ function popupHTML(props, fallbackTitle) {
   `;
 }
 
-      // ===== Custom divIcon for each layer =====
 // ===== Custom divIcon for each layer =====
     const ICONS = {
       "GNSS固定站": L.divIcon({
-        className: "leaflet-div-icon", // 也可用 ""，但建議保留，配合你 CSS
+        className: "leaflet-div-icon", // 也可用 ""，但建議保留，配合CSS
         html: '<div class="mkrA"></div>',
         iconSize: [14, 14],
         iconAnchor: [7, 7],
@@ -172,9 +195,16 @@ function popupHTML(props, fallbackTitle) {
         iconSize: [14, 14],
         iconAnchor: [7, 7],
         popupAnchor: [0, -8]
+      }),
+      "地震震央": L.divIcon({
+        className: "leaflet-div-icon",
+        html: '<div class="mkrEpicenter">★</div>',
+        iconSize: [50, 50],
+        iconAnchor: [25, 25],
+        popupAnchor: [0, -10]
       })
     };
-  
+
   function makeGeoLayer(label, geojson) {
     return L.geoJSON(geojson, {
       // Point 用自訂 marker（不同 layer 用不同 icon）
@@ -186,9 +216,25 @@ function popupHTML(props, fallbackTitle) {
       // 每個點綁 popup
       onEachFeature: (feature, layer) => {
         const p = feature.properties || {};
-        layer.bindPopup(popupHTML(p, label)); // 你原本就有 popupHTML()
+        layer.bindPopup(popupHTML(p, label)); // 原本就有 popupHTML()
       }
     });
+  }
+
+  // ===== 建立震央圖層 =====
+  function makeEpicenterLayer() {
+    const marker = L.marker([EPICENTER.lat, EPICENTER.lon], {
+      icon: ICONS["地震震央"],
+      pane: "epicenterPane"
+    }).bindPopup(`
+      <div style="min-width:150px">
+        <div style="font-weight:700;font-size:14px;margin-bottom:6px">2016美濃地震震央</div>
+        <div><b>Lon：</b>${EPICENTER.lon}°</div>
+        <div><b>Lat：</b>${EPICENTER.lat}°</div>       
+      </div>
+    `);
+
+    return L.featureGroup([marker]);
   }
 
   function unionBounds(layersObj) {
@@ -278,9 +324,11 @@ function popupHTML(props, fallbackTitle) {
     DATA_SOURCES.forEach(d => {
       layersObj[d.label] = makeGeoLayer(d.label, allGeoJSONs[d.label]);
     });
-    overlayLayers = layersObj;
 
-    // 把圖層加到地圖 + fit 到總範圍
+    // 加入震央圖層
+    layersObj[EPICENTER.label] = makeEpicenterLayer();
+
+    overlayLayers = layersObj;   // 把圖層加到地圖 + fit 到總範圍  
     addLayersToMap(overlayLayers, true);
 
     // 統計總點數幾個檔，更新狀態列
@@ -301,19 +349,29 @@ function popupHTML(props, fallbackTitle) {
       const filtered = filterByMapBounds(allGeoJSONs[d.label]);
       layersObj[d.label] = makeGeoLayer(d.label, filtered);
     }
+    
+    // bbox 模式下也保留震央圖層
+    layersObj[EPICENTER.label] = makeEpicenterLayer();
+    
     overlayLayers = layersObj;
-
-    addLayersToMap(overlayLayers, false); // bbox 篩選不強制 fit（你想 fit 我也可以幫你改）
+    addLayersToMap(overlayLayers, false); // bbox 篩選不強制 fit
+    
     setStatus("bbox 篩選完成（可用右上角圖層開關）");
   }
 
   // 綁按鈕
   document.getElementById("btnLoadAll").addEventListener("click", () => {
-    loadAll().catch(e => { setStatus("載入失敗：" + e.message); alert(e.message); });
+    loadAll().catch(e => { 
+      setStatus("載入失敗：" + e.message); 
+      alert(e.message); 
+    });
   });
 
   document.getElementById("btnLoadBbox").addEventListener("click", () => {
-    loadBbox().catch(e => { setStatus("bbox 篩選失敗：" + e.message); alert(e.message); });
+    loadBbox().catch(e => { 
+      setStatus("bbox 篩選失敗：" + e.message);
+      alert(e.message); 
+    });
   });
 
   // 預設先載入一次
