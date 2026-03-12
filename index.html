@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>WebGIS Demo (Leaflet + GeoJSON)</title>
+  <title>WebGIS Demo 2016 Meinong EQ</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
@@ -34,14 +34,14 @@
     .muted { color: #666; }
     code { background: #f4f4f4; padding: 1px 4px; border-radius: 4px; }
 
-    /* ===== Custom Markers (Layer A/B) ===== */
+    /* ===== Custom Markers  ===== */
     /* 讓 divIcon 不要出現白底框 */
     .leaflet-div-icon {
       background: transparent;
       border: none;
     }
 
-    /* A：圓形（藍色） */
+    /* GNSS固定站：藍色圓形 */
     .mkrA {
       width: 14px;
       height: 14px;
@@ -51,7 +51,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     }
 
-    /* B：圓形（紅色） */
+    /* GNSS移動站：紅色圓形）*/
     .mkrB {
       width: 14px;
       height: 14px;
@@ -60,16 +60,20 @@
       border: 2px solid #ffffff;
       box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     }
+    
+    /* 震央: 黃色星星 */
     .mkrEpicenter {
       font-size: 40px;
       color: #e6f60c;
       text-shadow: 0 0 2px #fff;
       -webkit-text-stroke: 1.5px #fff;
     }
+    
+    /* 震央: 黃色星星(圖例) */
     .legendEpicenter {
       display: inline-block;
       font-size: 28px;
-      color: #ddec0b;
+      color: #e6f60c;
     }
   </style>
 </head>
