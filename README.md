@@ -18,6 +18,6 @@
 - 資料來源：中央地質調查所
 
 ## GeoJSON 欄位（properties）
-- `GNSS`：測站代碼（Popup 標題）
+- `GNSS`：測站代碼
 - `位移量`：垂直位移量（mm）
 - `Lon`, `Lat`：座標（WGS84）
