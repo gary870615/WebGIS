@@ -157,13 +157,13 @@
     }
   }
 
-function popupHTML(props, fallbackTitle) {
+  //設定測站popup
+  function popupHTML(props, fallbackTitle) {
   const title = props?.GNSS ?? fallbackTitle ?? "Station";
 
   const lon = props?.Lon ?? "";
   const lat = props?.Lat ?? "";
 
-  // 中文欄位用 ["位移量"]
   const disp = props?.["位移量"] ?? props?.Displacement ?? "";
 
   const dispText = (disp !== "" && Number.isFinite(Number(disp)))
@@ -174,8 +174,8 @@ function popupHTML(props, fallbackTitle) {
     <div style="min-width:105px">
       <div style="font-weight:700;font-size:14px;margin-bottom:6px">${title}</div>
       <div><b>位移量：</b>${dispText}</div>
-      <div><b>Lon：</b>${lon}</div>
-      <div><b>Lat：</b>${lat}</div>
+      <div><b>Lon：</b>${lon}°</div>
+      <div><b>Lat：</b>${lat}°</div>
     </div>
   `;
 }
@@ -299,7 +299,7 @@ function popupHTML(props, fallbackTitle) {
           return b.contains([lat, lon]); // Leaflet 用 [lat, lon]
         }
 
-        // LineString/Polygon：先不裁切，直接保留（你之後若有線面再幫你做精準裁切）
+        // LineString/Polygon：先不裁切，直接保留
         return true;
       })
     };
