@@ -34,7 +34,7 @@
     .muted { color: #666; }
     code { background: #f4f4f4; padding: 1px 4px; border-radius: 4px; }
 
-    /* ===== Custom Markers  ===== */
+    /* Custom Markers  */
     /* 讓 divIcon 不要出現白底框 */
     .leaflet-div-icon {
       background: transparent;
@@ -79,39 +79,39 @@
 </head>
 
 <body>
-<div id="map"></div>
+  <div id="map"></div>
+  
+    <div class="panel">
+    <h3>2016美濃地震GNSS測站垂直同震位移</h3>
 
-<div class="panel">
-  <h3>2016美濃地震GNSS測站垂直同震位移</h3>
+    <div class="row">
+      資料來源：中央地質調查所
+    </div>
 
-  <div class="row">
-    資料來源：中央地質調查所
-  </div>
+    <button id="btnLoadAll">載入全部點位</button>
+    <button id="btnLoadBbox">依目前地圖視窗 bbox 篩選</button>
 
-  <button id="btnLoadAll">載入全部點位</button>
-  <button id="btnLoadBbox">依目前地圖視窗 bbox 篩選</button>
+    <div class="row muted" id="status">狀態：待命</div>
 
-  <div class="row muted" id="status">狀態：待命</div>
+    <div class="row muted">
+      提示：位移量正值為抬升，負值為沉陷。
+    </div>
 
-  <div class="row muted">
-    提示：位移量正值為抬升，負值為沉陷。
-  </div>
-
-  <div class="row muted">
-  圖例：
-  <span style="display:inline-flex;align-items:center;gap:6px;">
-    <span class="mkrA"></span> GNSS固定站
-  </span>
-  &nbsp;&nbsp;
-  <span style="display:inline-flex;align-items:center;gap:6px;">
-    <span class="mkrB"></span> GNSS移動站
-  </span>
+    <div class="row muted">
+    圖例：
+    <span style="display:inline-flex;align-items:center;gap:6px;">
+      <span class="mkrA"></span> GNSS固定站
+    </span>
     &nbsp;&nbsp;
-  <span style="display:inline-flex;align-items:center;gap:6px;">
-    <span class="legendEpicenter">★</span> 地震震央
-  </span>
+    <span style="display:inline-flex;align-items:center;gap:6px;">
+      <span class="mkrB"></span> GNSS移動站
+    </span>
+      &nbsp;&nbsp;
+    <span style="display:inline-flex;align-items:center;gap:6px;">
+      <span class="legendEpicenter">★</span> 地震震央
+    </span>
+    </div>
   </div>
-</div>
 
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -136,6 +136,13 @@
   map.getPane('epicenterPane').style.zIndex = 650; 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
+  }).addTo(map);
+
+  // 加入比例尺 
+    L.control.scale({
+    position: 'bottomleft', // 比例尺位置：左下角
+    metric: true,           // 顯示公尺 / 公里
+    imperial: false         // 不顯示英里
   }).addTo(map);
 
   // 圖層與資料快取
@@ -184,7 +191,7 @@
   `;
 }
 
-// ===== Custom divIcon for each layer =====
+// Custom divIcon for each layer
     const ICONS = {
       "GNSS固定站": L.divIcon({
         className: "leaflet-div-icon", // 也可用 ""，但建議保留，配合CSS
@@ -225,7 +232,7 @@
     });
   }
 
-  // ===== 建立震央圖層 =====
+  // 建立震央圖層 
   function makeEpicenterLayer() {
     const marker = L.marker([EPICENTER.lat, EPICENTER.lon], {
       icon: ICONS["地震震央"],
